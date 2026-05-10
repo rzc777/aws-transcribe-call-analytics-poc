@@ -22,6 +22,15 @@ data "aws_ami" "ubuntu_arm64" {
   }
 }
 
+resource "aws_eip" "wireguard" {
+  domain = "vpc"
+
+  tags = {
+    Name    = "${var.project_name}-eip"
+    Project = var.project_name
+  }
+}
+
 resource "aws_security_group" "wireguard" {
   name_prefix = "${var.project_name}-"
   description = "WireGuard VPN security group"
@@ -69,12 +78,15 @@ resource "aws_instance" "wireguard" {
   vpc_security_group_ids      = [aws_security_group.wireguard.id]
   associate_public_ip_address = true
   user_data_replace_on_change = true
+  key_name                    = var.key_name
 
   user_data = templatefile("${path.module}/user_data.sh.tpl", {
-    wg_password     = var.wg_easy_password
-    wg_default_dns  = var.wg_default_dns
-    wireguard_port  = var.wireguard_port
-    web_ui_port     = var.web_ui_port
+    wg_admin_username = var.wg_easy_username
+    wg_admin_password = var.wg_easy_password
+    wg_host           = aws_eip.wireguard.public_ip
+    wg_default_dns    = var.wg_default_dns
+    wireguard_port    = var.wireguard_port
+    web_ui_port       = var.web_ui_port
   })
 
   root_block_device {
@@ -89,12 +101,7 @@ resource "aws_instance" "wireguard" {
   }
 }
 
-resource "aws_eip" "wireguard" {
-  instance = aws_instance.wireguard.id
-  domain   = "vpc"
-
-  tags = {
-    Name    = "${var.project_name}-eip"
-    Project = var.project_name
-  }
+resource "aws_eip_association" "wireguard" {
+  instance_id   = aws_instance.wireguard.id
+  allocation_id = aws_eip.wireguard.id
 }
