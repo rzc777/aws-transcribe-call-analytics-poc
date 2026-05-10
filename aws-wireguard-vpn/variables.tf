@@ -46,8 +46,20 @@ variable "admin_cidr_blocks" {
   default     = ["0.0.0.0/0"]
 }
 
+variable "wg_easy_username" {
+  description = "wg-easy admin username."
+  type        = string
+  default     = "admin"
+}
+
 variable "wg_easy_password" {
-  description = "Password for wg-easy web UI. Pass with TF_VAR_wg_easy_password."
+  description = "wg-easy admin password. Pass with TF_VAR_wg_easy_password."
   type        = string
   sensitive   = true
+}
+
+variable "key_name" {
+  description = "Optional EC2 key pair name for SSH access. Leave null if SSH is not needed."
+  type        = string
+  default     = null
 }
