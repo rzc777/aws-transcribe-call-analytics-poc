@@ -33,15 +33,7 @@ resource "aws_eip" "wireguard" {
 
 resource "aws_security_group" "wireguard" {
   name_prefix = "${var.project_name}-"
-  description = "WireGuard VPN security group"
-
-  ingress {
-    description = "SSH"
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = var.admin_cidr_blocks
-  }
+  description = "Pure WireGuard VPN security group"
 
   ingress {
     description = "WireGuard UDP"
@@ -49,14 +41,6 @@ resource "aws_security_group" "wireguard" {
     to_port     = var.wireguard_port
     protocol    = "udp"
     cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  ingress {
-    description = "wg-easy Web UI"
-    from_port   = var.web_ui_port
-    to_port     = var.web_ui_port
-    protocol    = "tcp"
-    cidr_blocks = var.admin_cidr_blocks
   }
 
   egress {
@@ -72,21 +56,53 @@ resource "aws_security_group" "wireguard" {
   }
 }
 
+resource "aws_iam_role" "ssm" {
+  name = "${var.project_name}-ssm-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Principal = {
+          Service = "ec2.amazonaws.com"
+        }
+        Action = "sts:AssumeRole"
+      }
+    ]
+  })
+
+  tags = {
+    Name    = "${var.project_name}-ssm-role"
+    Project = var.project_name
+  }
+}
+
+resource "aws_iam_role_policy_attachment" "ssm_managed" {
+  role       = aws_iam_role.ssm.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+}
+
+resource "aws_iam_instance_profile" "ssm" {
+  name = "${var.project_name}-ssm-profile"
+  role = aws_iam_role.ssm.name
+}
+
 resource "aws_instance" "wireguard" {
   ami                         = data.aws_ami.ubuntu_arm64.id
   instance_type               = var.instance_type
   vpc_security_group_ids      = [aws_security_group.wireguard.id]
+  iam_instance_profile        = aws_iam_instance_profile.ssm.name
   associate_public_ip_address = true
   user_data_replace_on_change = true
-  key_name                    = var.key_name
 
   user_data = templatefile("${path.module}/user_data.sh.tpl", {
-    wg_admin_username = var.wg_easy_username
-    wg_admin_password = var.wg_easy_password
-    wg_host           = aws_eip.wireguard.public_ip
-    wg_default_dns    = var.wg_default_dns
-    wireguard_port    = var.wireguard_port
-    web_ui_port       = var.web_ui_port
+    wg_host        = aws_eip.wireguard.public_ip
+    wg_dns         = var.wg_dns
+    wg_cidr        = var.wg_cidr
+    wg_server_ip   = var.wg_server_ip
+    wg_client_ip   = var.wg_client_ip
+    wireguard_port = var.wireguard_port
   })
 
   root_block_device {
@@ -99,6 +115,8 @@ resource "aws_instance" "wireguard" {
     Name    = "${var.project_name}-ec2"
     Project = var.project_name
   }
+
+  depends_on = [aws_iam_role_policy_attachment.ssm_managed]
 }
 
 resource "aws_eip_association" "wireguard" {
