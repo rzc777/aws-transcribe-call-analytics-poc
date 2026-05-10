@@ -2,7 +2,7 @@
 set -euxo pipefail
 
 apt-get update -y
-DEBIAN_FRONTEND=noninteractive apt-get install -y wireguard qrencode iptables-persistent
+DEBIAN_FRONTEND=noninteractive apt-get install -y wireguard qrencode iptables
 
 SERVER_PRIV=$(wg genkey)
 SERVER_PUB=$(echo "$SERVER_PRIV" | wg pubkey)
@@ -24,13 +24,16 @@ PublicKey = $CLIENT_PUB
 AllowedIPs = ${wg_client_ip}
 EOF
 
-sysctl -w net.ipv4.ip_forward=1
-sed -i 's/#net.ipv4.ip_forward=1/net.ipv4.ip_forward=1/' /etc/sysctl.conf
+cat > /etc/sysctl.d/99-wireguard-forward.conf <<EOF
+net.ipv4.ip_forward=1
+EOF
+sysctl --system
 
 systemctl enable wg-quick@wg0
-systemctl start wg-quick@wg0
+systemctl restart wg-quick@wg0
 
 mkdir -p /opt/wireguard
+chmod 700 /opt/wireguard
 
 cat > /opt/wireguard/windows-client.conf <<EOF
 [Interface]
@@ -44,3 +47,6 @@ AllowedIPs = 0.0.0.0/0
 Endpoint = ${wg_host}:${wireguard_port}
 PersistentKeepalive = 25
 EOF
+chmod 600 /opt/wireguard/windows-client.conf
+
+qrencode -t ansiutf8 < /opt/wireguard/windows-client.conf > /opt/wireguard/windows-client.qr.txt
