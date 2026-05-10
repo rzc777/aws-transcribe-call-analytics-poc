@@ -1,2 +1,9 @@
-aws_region="us-east-1"
-language_code="en-US"
+aws_region           = "us-east-1"
+project_name         = "transcribe-poc"
+environment          = "poc"
+language_code        = "en-US"
+enable_pii_redaction = true
+enable_summary       = true
+audio_channel_type   = "dual_channel"
+recordings_prefix    = "recordings/"
+recordings_suffix    = ".wav"
