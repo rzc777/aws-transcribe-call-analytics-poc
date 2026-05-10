@@ -1,2 +1,4 @@
-# aws-transcribe-call-analytics-poc
-aws-transcribe-call-analytics-poc
+# AWS Transcribe Call Analytics POC
+
+terraform init
+terraform apply
