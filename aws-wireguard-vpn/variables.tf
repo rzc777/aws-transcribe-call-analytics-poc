@@ -28,38 +28,26 @@ variable "wireguard_port" {
   default     = 51820
 }
 
-variable "web_ui_port" {
-  description = "wg-easy web UI TCP port."
-  type        = number
-  default     = 51821
-}
-
-variable "wg_default_dns" {
+variable "wg_dns" {
   description = "DNS server pushed to VPN clients."
   type        = string
   default     = "1.1.1.1"
 }
 
-variable "admin_cidr_blocks" {
-  description = "CIDR blocks allowed to access SSH and wg-easy web UI. For POC only, 0.0.0.0/0 is convenient but less secure."
-  type        = list(string)
-  default     = ["0.0.0.0/0"]
+variable "wg_cidr" {
+  description = "WireGuard VPN CIDR."
+  type        = string
+  default     = "10.8.0.0/24"
 }
 
-variable "wg_easy_username" {
-  description = "wg-easy admin username."
+variable "wg_server_ip" {
+  description = "WireGuard server tunnel IP with CIDR."
   type        = string
-  default     = "admin"
+  default     = "10.8.0.1/24"
 }
 
-variable "wg_easy_password" {
-  description = "wg-easy admin password. Pass with TF_VAR_wg_easy_password."
+variable "wg_client_ip" {
+  description = "WireGuard Windows client tunnel IP with CIDR."
   type        = string
-  sensitive   = true
-}
-
-variable "key_name" {
-  description = "Optional EC2 key pair name for SSH access. Leave null if SSH is not needed."
-  type        = string
-  default     = null
+  default     = "10.8.0.2/32"
 }
