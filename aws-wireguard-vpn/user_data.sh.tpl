@@ -2,39 +2,45 @@
 set -euxo pipefail
 
 apt-get update -y
-apt-get install -y docker.io
+DEBIAN_FRONTEND=noninteractive apt-get install -y wireguard qrencode iptables-persistent
 
-systemctl enable docker
-systemctl start docker
+SERVER_PRIV=$(wg genkey)
+SERVER_PUB=$(echo "$SERVER_PRIV" | wg pubkey)
+CLIENT_PRIV=$(wg genkey)
+CLIENT_PUB=$(echo "$CLIENT_PRIV" | wg pubkey)
 
-mkdir -p /opt/wg-easy/data
+NIC=$(ip route | awk '/default/ {print $5}' | head -n1)
 
-cat > /opt/wg-easy/start.sh <<'EOF'
-#!/bin/bash
-set -euxo pipefail
+cat > /etc/wireguard/wg0.conf <<EOF
+[Interface]
+Address = ${wg_server_ip}
+ListenPort = ${wireguard_port}
+PrivateKey = $SERVER_PRIV
+PostUp = iptables -A FORWARD -i wg0 -j ACCEPT; iptables -A FORWARD -o wg0 -j ACCEPT; iptables -t nat -A POSTROUTING -o $NIC -j MASQUERADE
+PostDown = iptables -D FORWARD -i wg0 -j ACCEPT; iptables -D FORWARD -o wg0 -j ACCEPT; iptables -t nat -D POSTROUTING -o $NIC -j MASQUERADE
 
-docker rm -f wg-easy || true
-
-docker run -d \
-  --name wg-easy \
-  -e INSECURE=true \
-  -e INIT_ENABLED=true \
-  -e INIT_USERNAME="${wg_admin_username}" \
-  -e INIT_PASSWORD="${wg_admin_password}" \
-  -e INIT_HOST="${wg_host}" \
-  -e INIT_PORT="${wireguard_port}" \
-  -e INIT_DNS="${wg_default_dns}" \
-  -v /opt/wg-easy/data:/etc/wireguard \
-  -v /lib/modules:/lib/modules:ro \
-  -p ${wireguard_port}:${wireguard_port}/udp \
-  -p ${web_ui_port}:51821/tcp \
-  --cap-add=NET_ADMIN \
-  --cap-add=SYS_MODULE \
-  --sysctl="net.ipv4.ip_forward=1" \
-  --sysctl="net.ipv4.conf.all.src_valid_mark=1" \
-  --restart unless-stopped \
-  ghcr.io/wg-easy/wg-easy:15
+[Peer]
+PublicKey = $CLIENT_PUB
+AllowedIPs = ${wg_client_ip}
 EOF
 
-chmod +x /opt/wg-easy/start.sh
-/opt/wg-easy/start.sh
+sysctl -w net.ipv4.ip_forward=1
+sed -i 's/#net.ipv4.ip_forward=1/net.ipv4.ip_forward=1/' /etc/sysctl.conf
+
+systemctl enable wg-quick@wg0
+systemctl start wg-quick@wg0
+
+mkdir -p /opt/wireguard
+
+cat > /opt/wireguard/windows-client.conf <<EOF
+[Interface]
+PrivateKey = $CLIENT_PRIV
+Address = ${wg_client_ip}
+DNS = ${wg_dns}
+
+[Peer]
+PublicKey = $SERVER_PUB
+AllowedIPs = 0.0.0.0/0
+Endpoint = ${wg_host}:${wireguard_port}
+PersistentKeepalive = 25
+EOF
