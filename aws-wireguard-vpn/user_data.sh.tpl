@@ -17,6 +17,7 @@ docker rm -f wg-easy || true
 
 docker run -d \
   --name wg-easy \
+  -e INSECURE=true \
   -e INIT_ENABLED=true \
   -e INIT_USERNAME="${wg_admin_username}" \
   -e INIT_PASSWORD="${wg_admin_password}" \
@@ -24,6 +25,7 @@ docker run -d \
   -e INIT_PORT="${wireguard_port}" \
   -e INIT_DNS="${wg_default_dns}" \
   -v /opt/wg-easy/data:/etc/wireguard \
+  -v /lib/modules:/lib/modules:ro \
   -p ${wireguard_port}:${wireguard_port}/udp \
   -p ${web_ui_port}:51821/tcp \
   --cap-add=NET_ADMIN \
