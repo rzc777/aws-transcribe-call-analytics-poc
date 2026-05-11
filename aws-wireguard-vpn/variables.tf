@@ -1,7 +1,7 @@
 variable "aws_region" {
   description = "AWS region for the VPN server."
   type        = string
-  default     = "ap-northeast-1"
+  default     = "ap-southeast-1"
 }
 
 variable "project_name" {
@@ -11,9 +11,9 @@ variable "project_name" {
 }
 
 variable "instance_type" {
-  description = "EC2 instance type. t4g.nano is the lowest-cost recommended option."
+  description = "EC2 instance type."
   type        = string
-  default     = "t4g.nano"
+  default     = "t4g.small"
 }
 
 variable "root_volume_size" {
@@ -55,11 +55,11 @@ variable "wg_client_ip" {
 variable "client_mtu" {
   description = "WireGuard Windows client MTU."
   type        = number
-  default     = 1380
+  default     = 1280
 }
 
 variable "persistent_keepalive" {
   description = "WireGuard Windows client persistent keepalive seconds."
   type        = number
-  default     = 25
+  default     = 15
 }
