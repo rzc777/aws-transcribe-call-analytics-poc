@@ -2,16 +2,7 @@
 set -euxo pipefail
 
 apt-get update -y
-DEBIAN_FRONTEND=noninteractive apt-get install -y wireguard qrencode iptables awscli
-
-TOKEN=$(curl -X PUT -H "X-aws-ec2-metadata-token-ttl-seconds: 21600" -s http://169.254.169.254/latest/api/token)
-INSTANCE_ID=$(curl -H "X-aws-ec2-metadata-token: $TOKEN" -s http://169.254.169.254/latest/meta-data/instance-id)
-
-aws ec2 associate-address \
-  --region ${aws_region} \
-  --instance-id "$INSTANCE_ID" \
-  --allocation-id ${eip_allocation_id} \
-  --allow-reassociation
+DEBIAN_FRONTEND=noninteractive apt-get install -y wireguard qrencode iptables
 
 SERVER_PRIV=$(wg genkey)
 SERVER_PUB=$(echo "$SERVER_PRIV" | wg pubkey)
@@ -49,12 +40,13 @@ cat > /opt/wireguard/windows-client.conf <<EOF
 PrivateKey = $CLIENT_PRIV
 Address = ${wg_client_ip}
 DNS = ${wg_dns}
+MTU = 1280
 
 [Peer]
 PublicKey = $SERVER_PUB
 AllowedIPs = 0.0.0.0/0
 Endpoint = ${wg_host}:${wireguard_port}
-PersistentKeepalive = 25
+PersistentKeepalive = 10
 EOF
 chmod 600 /opt/wireguard/windows-client.conf
 
