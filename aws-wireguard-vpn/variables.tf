@@ -23,9 +23,9 @@ variable "root_volume_size" {
 }
 
 variable "wireguard_port" {
-  description = "WireGuard UDP port."
+  description = "WireGuard UDP port. UDP 443 is used by default for better NAT/ISP compatibility."
   type        = number
-  default     = 51820
+  default     = 443
 }
 
 variable "wg_dns" {
