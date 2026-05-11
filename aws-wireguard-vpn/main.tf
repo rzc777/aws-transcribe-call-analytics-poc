@@ -118,16 +118,14 @@ resource "aws_instance" "wireguard" {
   user_data_replace_on_change = true
 
   user_data = templatefile("${path.module}/user_data.sh.tpl", {
-    aws_region           = var.aws_region
-    eip_allocation_id    = aws_eip.wireguard.id
-    wg_host              = aws_eip.wireguard.public_ip
-    wg_dns               = var.wg_dns
-    wg_cidr              = var.wg_cidr
-    wg_server_ip         = var.wg_server_ip
-    wg_client_ip         = var.wg_client_ip
-    wireguard_port       = var.wireguard_port
-    client_mtu           = var.client_mtu
-    persistent_keepalive = var.persistent_keepalive
+    aws_region        = var.aws_region
+    eip_allocation_id = aws_eip.wireguard.id
+    wg_host           = aws_eip.wireguard.public_ip
+    wg_dns            = var.wg_dns
+    wg_cidr           = var.wg_cidr
+    wg_server_ip      = var.wg_server_ip
+    wg_client_ip      = var.wg_client_ip
+    wireguard_port    = var.wireguard_port
   })
 
   root_block_device {
