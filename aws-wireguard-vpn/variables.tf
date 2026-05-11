@@ -1,7 +1,7 @@
 variable "aws_region" {
   description = "AWS region for the VPN server."
   type        = string
-  default     = "ap-southeast-1"
+  default     = "ap-east-1"
 }
 
 variable "project_name" {
