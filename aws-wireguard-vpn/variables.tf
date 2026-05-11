@@ -31,7 +31,7 @@ variable "wireguard_port" {
 variable "wg_dns" {
   description = "DNS server pushed to VPN clients."
   type        = string
-  default     = "1.1.1.1"
+  default     = "8.8.8.8"
 }
 
 variable "wg_cidr" {
