@@ -40,13 +40,12 @@ cat > /opt/wireguard/windows-client.conf <<EOF
 PrivateKey = $CLIENT_PRIV
 Address = ${wg_client_ip}
 DNS = ${wg_dns}
-MTU = 1280
 
 [Peer]
 PublicKey = $SERVER_PUB
 AllowedIPs = 0.0.0.0/0
 Endpoint = ${wg_host}:${wireguard_port}
-PersistentKeepalive = 10
+PersistentKeepalive = 25
 EOF
 chmod 600 /opt/wireguard/windows-client.conf
 
