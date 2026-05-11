@@ -51,3 +51,15 @@ variable "wg_client_ip" {
   type        = string
   default     = "10.8.0.2/32"
 }
+
+variable "client_mtu" {
+  description = "WireGuard Windows client MTU."
+  type        = number
+  default     = 1380
+}
+
+variable "persistent_keepalive" {
+  description = "WireGuard Windows client persistent keepalive seconds."
+  type        = number
+  default     = 25
+}
